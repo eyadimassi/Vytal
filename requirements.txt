@@ -1,0 +1,14 @@
+# Core library for building with LLMs
+langchain
+
+# OpenAI provider for LangChain (for accessing models like GPT-4)
+langchain_google_genai
+
+# For making HTTP requests to the MedlinePlus API
+requests
+
+# For loading environment variables from the .env file
+python-dotenv
+
+# We will add backend (fastapi, uvicorn) and frontend (streamlit)
+# libraries here in later steps.
