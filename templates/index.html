@@ -1,0 +1,98 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vytal Medical Chatbot</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        #chat-container { max-width: 800px; margin: 0 auto; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 90vh; }
+        #chat-box { flex-grow: 1; padding: 20px; overflow-y: auto; border-bottom: 1px solid #ddd; }
+        .message { margin-bottom: 15px; line-height: 1.5; }
+        .user-message { text-align: right; color: #333; }
+        .bot-message { text-align: left; color: #0056b3; }
+        .message p { display: inline-block; padding: 10px 15px; border-radius: 18px; margin: 0; max-width: 80%; }
+        .user-message p { background-color: #dcf8c6; }
+        .bot-message p { background-color: #f1f0f0; }
+        #input-form { display: flex; padding: 20px; }
+        #message-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; margin-right: 10px; }
+        #send-button { padding: 10px 20px; border: none; background-color: #007bff; color: white; border-radius: 20px; cursor: pointer; }
+        #send-button:disabled { background-color: #a0c3e6; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-box">
+            <div class="message bot-message">
+                <p>Hello! How can I help you today? Please ask me a medical question.</p>
+            </div>
+        </div>
+        <form id="input-form">
+            <input type="text" id="message-input" placeholder="Type your question here..." autocomplete="off">
+            <button id="send-button" type="submit">Send</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('input-form');
+            const input = document.getElementById('message-input');
+            const sendButton = document.getElementById('send-button');
+            const chatBox = document.getElementById('chat-box');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const messageText = input.value.trim();
+                if (!messageText) return;
+
+                appendMessage(messageText, 'user-message');
+                input.value = '';
+                sendButton.disabled = true;
+                appendMessage('<i>Thinking...</i>', 'bot-message', true); // Add a temporary thinking message
+
+                try {
+                    const response = await fetch('/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: messageText }),
+                    });
+
+                    // Remove the "Thinking..." message
+                    const thinkingMessage = document.getElementById('thinking-message');
+                    if (thinkingMessage) thinkingMessage.parentElement.remove();
+
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok.');
+                    }
+                    
+                    const data = await response.json();
+                    appendMessage(data.response, 'bot-message');
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    appendMessage('Sorry, something went wrong. Please try again.', 'bot-message');
+                } finally {
+                    sendButton.disabled = false;
+                    input.focus();
+                }
+            });
+
+            function appendMessage(text, className, isThinking = false) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${className}`;
+                
+                const p = document.createElement('p');
+                p.innerHTML = text; // Use innerHTML to render the <i> tag for "Thinking..."
+                if (isThinking) {
+                    p.id = 'thinking-message';
+                }
+
+                messageDiv.appendChild(p);
+                chatBox.appendChild(messageDiv);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        });
+    </script>
+</body>
+</html>

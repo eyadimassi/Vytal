@@ -1,0 +1,26 @@
+# Dockerfile
+
+# 1. Use an official Python runtime as a parent image
+FROM python:3.11-slim
+
+# 2. Set the working directory in the container
+WORKDIR /app
+
+# 3. Copy the requirements file and install dependencies
+# This is done first to leverage Docker's layer caching
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 4. Copy the rest of the application code into the container
+COPY . .
+
+# 5. Expose the port the app runs on
+EXPOSE 5000
+
+# 6. Define the command to run the application
+# We use Gunicorn here as it's a production-ready web server, unlike Flask's built-in server.
+# First, install Gunicorn
+RUN pip install gunicorn
+
+# Now, set the command to run it.
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
