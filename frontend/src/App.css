@@ -1,0 +1,225 @@
+/* frontend/src/App.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+
+:root {
+  --font-family: 'Poppins', sans-serif;
+  --background-color: #F9F9F9; /* Light grey for the main area background */
+  --sidebar-bg: #202124; /* Dark grey like Google's dark theme */
+  --chat-bg: #FFFFFF;
+  --primary-accent: #4A80FF;
+  --primary-accent-light: rgba(74, 128, 255, 0.1);
+  --text-dark: #1A202C;
+  --text-light-on-dark-bg: #E8EAED; /* Light text for the dark sidebar */
+  --text-subtle-on-dark-bg: #969BA1;
+  --border-color: #E2E8F0;
+  --sidebar-hover-bg: #2D2E31;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--background-color);
+  margin: 0;
+  color: var(--text-dark);
+  font-size: 15px; /* A slightly smaller base font size */
+}
+
+.app-layout {
+  display: flex;
+  height: 100vh;
+}
+
+/* --- Sidebar Styles --- */
+.sidebar {
+  width: 260px; /* A bit smaller */
+  background-color: var(--sidebar-bg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  color: var(--text-light-on-dark-bg);
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 8px;
+}
+
+.logo {
+  width: 32px; /* Smaller logo */
+  height: 32px;
+  margin-right: 12px;
+  object-fit: contain; /* Ensures logo isn't stretched */
+}
+
+.sidebar-header h1 {
+  font-size: 1.25rem; /* Smaller title */
+  font-weight: 600;
+  margin: 0;
+}
+
+.new-chat-button {
+  width: 100%;
+  padding: 10px;
+  background-color: transparent;
+  color: var(--text-light-on-dark-bg);
+  border: 1px solid var(--text-subtle-on-dark-bg);
+  border-radius: 8px;
+  font-family: var(--font-family);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  margin-bottom: 20px;
+}
+
+.new-chat-button:hover {
+  background-color: var(--sidebar-hover-bg);
+  border-color: var(--text-light-on-dark-bg);
+}
+
+.conversations-list {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.conversation-item {
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.9rem;
+  color: var(--text-subtle-on-dark-bg);
+}
+
+.conversation-item:hover {
+  background-color: var(--sidebar-hover-bg);
+  color: var(--text-light-on-dark-bg);
+}
+
+.conversation-item.active {
+  background-color: var(--primary-accent);
+  color: white;
+  font-weight: 500;
+}
+
+/* --- Main Chat Area Styles --- */
+.chat-area {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: var(--chat-bg);
+}
+
+.chat-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.message-wrapper {
+  display: flex;
+  margin-bottom: 20px;
+  max-width: 90%;
+}
+
+.message-wrapper.user {
+  margin-left: auto;
+  flex-direction: row-reverse;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--primary-accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+.message-wrapper.user .avatar {
+  margin-right: 0;
+  margin-left: 12px;
+  background-color: #28a745;
+}
+
+.message-bubble {
+  padding: 12px 16px;
+  border-radius: 12px;
+  line-height: 1.6;
+  background-color: #F1F3F4; /* Light grey for bot messages */
+}
+
+.message-wrapper.user .message-bubble {
+  background-color: var(--primary-accent-light);
+}
+
+/* Markdown Styles */
+.message-bubble strong { font-weight: 600; }
+.message-bubble ul { padding-left: 20px; margin: 8px 0; }
+.message-bubble hr { border: none; border-top: 1px solid var(--border-color); margin: 12px 0; }
+
+/* Input Form */
+.input-container {
+  padding: 16px 24px;
+  flex-shrink: 0;
+}
+
+.input-form {
+  position: relative;
+  max-width: 720px; /* Constrain input width like ChatGPT */
+  margin: 0 auto;
+}
+
+.input-form input {
+  width: 100%;
+  padding: 14px 52px 14px 20px; /* More padding on right for round button */
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  font-size: 0.95rem;
+  font-family: var(--font-family);
+  box-sizing: border-box;
+  background-color: #FFFFFF;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-form input:focus {
+  outline: none;
+  border-color: var(--primary-accent);
+  box-shadow: 0 0 0 3px rgba(74, 128, 255, 0.15);
+}
+
+.input-form button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px; /* Round button dimensions */
+  height: 36px;
+  border: none;
+  background-color: var(--primary-accent);
+  color: white;
+  border-radius: 50%; /* Makes it round */
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.2s ease;
+}
+
+.input-form button:disabled {
+  background-color: #a0c3e6;
+  cursor: not-allowed;
+}
