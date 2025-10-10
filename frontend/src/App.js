@@ -124,7 +124,8 @@ function App() {
             <input
               type="text"
               value={message}
-              onChange={(e) => setMessage(e.g.target.value)}
+              // --- THIS IS THE CORRECTED LINE ---
+              onChange={(e) => setMessage(e.target.value)}
               placeholder="Ask Vytal anything..."
               autoComplete="off"
               disabled={isLoading}
