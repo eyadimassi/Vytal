@@ -8,32 +8,44 @@ const app = express();
 const PORT = 8080;
 
 // --- Middleware ---
-app.use(cors()); // Enable Cross-Origin Resource Sharing
-app.use(express.json()); // Parse incoming JSON requests
+app.use(cors());
+app.use(express.json());
 
-// --- The URL for our Python AI service ---
-// We use the service name 'backend-python' from docker-compose.yml
-// Docker's internal DNS will resolve this to the correct container's IP address.
 const PYTHON_API_URL = 'http://backend-python:5000/chat';
 
 // --- Routes ---
 app.post('/api/chat', async (req, res) => {
   try {
     console.log('Received request from frontend:', req.body.message);
+    console.log('Forwarding request to Python service at:', PYTHON_API_URL);
 
-    // Forward the request from the frontend to the Python service
     const response = await axios.post(PYTHON_API_URL, {
       message: req.body.message,
       chat_history: req.body.chat_history || [],
     });
 
-    console.log('Received response from Python service.');
-
-    // Send the Python service's response back to the frontend
+    console.log('Successfully received response from Python service.');
     res.json(response.data);
 
   } catch (error) {
-    console.error('Error proxying request to Python service:', error.message);
+    // --- THIS IS THE NEW, DETAILED ERROR LOGGING ---
+    console.error('--- FAILED TO PROXY REQUEST TO PYTHON SERVICE ---');
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error('Python service responded with an error status.');
+      console.error('Status:', error.response.status);
+      console.error('Data:', error.response.data);
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('No response was received from the Python service.');
+      console.error('This often means the service name is wrong or the container is not running/reachable.');
+      console.error('Error Code:', error.code); // e.g., ECONNREFUSED
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error('An error occurred while setting up the request:', error.message);
+    }
+    console.error('-------------------------------------------------');
     res.status(500).json({ error: 'Failed to get response from AI service.' });
   }
 });

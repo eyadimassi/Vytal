@@ -1,13 +1,16 @@
-# src/chatbot/chain.py
+# backend-python/src/chatbot/chain.py
 
 import os
+import logging
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.documents import Document
-# NEW: We now import the reranker directly
-from langchain_cohere import CohereRerank
+from langchain_core.prompts import MessagesPlaceholder
+
+# --- AGENT IMPORTS ---
+from langchain.agents import AgentExecutor, create_react_agent, Tool
+from langchain import hub
+from langchain_tavily import TavilySearch
 
 # --- Custom Module Imports ---
 from src.medline_client.api import search_medlineplus
@@ -16,129 +19,78 @@ from src.chatbot.memory import ConversationMemory
 # --- 1. Load Environment Variables ---
 load_dotenv()
 
-# --- 2. Initialize LLM and Reranker ---
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.1)
-compressor = CohereRerank(
-    model="rerank-english-v3.0",
-    cohere_api_key=os.getenv("COHERE_API_KEY"),
-    top_n=8  # We can increase this to get more diverse final results
+# --- 2. Initialize LLM ---
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
+
+# --- 3. Define the Tools the Agent Can Use ---
+
+def run_medline_search(query: str) -> str:
+    logging.info(f"--- Executing MedlinePlus Search Tool with query: '{query}' ---")
+    docs = search_medlineplus(query, retmax=3)
+    if not docs:
+        return "No relevant information found in the MedlinePlus encyclopedia."
+    context = ""
+    for doc in docs:
+        context += f"Topic: {doc['title']}\nSummary: {doc['summary']}\n\n"
+    return context
+
+medline_tool = Tool(
+    name="MedlinePlus_Search",
+    func=run_medline_search,
+    description="Use this tool FIRST to find trusted medical information about diseases, conditions, and wellness topics."
 )
 
-# --- 3. Define Prompts ---
+tavily_search = TavilySearch(max_results=3)
+web_search_tool = Tool(
+    name="Web_Search",
+    func=lambda query: tavily_search.invoke(query),
+    description="Use this tool as a FALLBACK only if MedlinePlus_Search returns no relevant information."
+)
 
-# NEW: This prompt now generates MULTIPLE search queries
-search_query_template = """
-Based on the user's question and conversation history below, generate a list of 3-5 concise, distinct medical search terms to look up in a health encyclopedia.
-- Focus on different aspects of the user's query (e.g., symptoms, conditions, medical history).
-- Return ONLY a comma-separated list of search terms.
+tools = [medline_tool, web_search_tool]
 
-PREVIOUS CONVERSATION:
-{chat_history}
+# --- 4. Create the Agent ---
+prompt = hub.pull("hwchase17/react-chat")
 
-USER'S QUESTION: {question}
+# --- THIS IS THE IMPROVED PROMPT ---
+# We are giving the agent more specific instructions on how to structure its answer.
+system_message = """You are Vytal, an expert AI health educator. Your persona is professional, empathetic, and clear.
 
-SEARCH TERMS:
-"""
-search_query_prompt = PromptTemplate.from_template(search_query_template)
+Your mission is to provide a detailed and well-structured answer to the user's question using the available tools.
 
-# NEW: This prompt is enhanced to better handle follow-up questions
-final_answer_template = """
-You are Vytal, an expert AI health educator. Your persona is professional, empathetic, and clear.
-Your primary mission is to synthesize the provided MedlinePlus context into a single, comprehensive, and easy-to-read response.
+**RULES:**
+1.  You **MUST** use the `MedlinePlus_Search` tool first for any medical query.
+2.  You **MUST ONLY** use the `Web_Search` tool if the `MedlinePlus_Search` tool returns "No relevant information found".
+3.  **Synthesize and Structure:** Do not just summarize. Create a detailed, easy-to-read response organized with clear headings (using `### Headings`) and bullet points. A good answer should explain what the condition is, list its primary symptoms in detail, and include a section on when it is important to seek medical attention.
+4.  Conclude **EVERY** response with the mandatory medical disclaimer, separated by a horizontal line (`---`).
 
-**Execution Rules:**
+---
+MANDATORY DISCLAIMER:
+I am an AI assistant and not a medical professional. This information is for educational purposes only. Please consult with a qualified healthcare provider for any medical advice, diagnosis, or treatment.
+---"""
 
-1.  **Analyze the Full Context:** Pay close attention to the `PREVIOUS CONVERSATION` to understand the user's full situation. If they ask a follow-up question like "what else could it be?", they are asking for alternative diagnoses for their *original symptoms*, not just things related to the last answer.
+prompt.template = system_message + "\n\n" + prompt.template
 
-2.  **Direct Opening:** Begin the answer directly. **Do NOT** start with "Based on the provided context...".
+agent = create_react_agent(llm=llm, tools=tools, prompt=prompt)
 
-3.  **Logical Structure & Formatting:**
-    *   Analyze the user's question and the context to create logical sections.
-    *   Use Markdown for clear formatting: `**Bold Headings**` for each section.
-    *   Use bullet points (`-`) for lists.
-    *   Ensure proper line breaks between paragraphs and headings.
+agent_executor = AgentExecutor(
+    agent=agent,
+    tools=tools,
+    verbose=True,
+    handle_parsing_errors=True,
+    max_iterations=10,
+)
 
-4.  **Comprehensive Synthesis:**
-    *   Combine information from all relevant context documents to form a complete picture. If there are multiple potential conditions, present them all.
-
-5.  **Strict Context Adherence:**
-    *   Your entire response must be based **exclusively** on the information within the `CONTEXT FROM MEDLINEPLUS` section.
-    *   If the context does not contain an answer, you must explicitly state that.
-
-6.  **Mandatory Disclaimer:**
-    *   Conclude EVERY response with the mandatory medical disclaimer, visually separated by a horizontal line (`---`).
-
-**PREVIOUS CONVERSATION:**
--------------------------
-{chat_history}
--------------------------
-
-**CONTEXT FROM MEDLINEPLUS:**
--------------------------
-{context}
--------------------------
-
-**USER'S QUESTION:** {question}
-
-**YOUR EXPERT RESPONSE:**
-"""
-final_answer_prompt = PromptTemplate.from_template(final_answer_template)
-
-
-# --- 4. Define the Main RAG Function (Completely Rewritten Logic) ---
+# --- 5. Define the Main Function ---
 def get_chatbot_response(user_question: str, memory: ConversationMemory) -> str:
-    """
-    Orchestrates an advanced RAG process with multi-query retrieval and direct reranking.
-    """
-    print(f"\nOriginal question: '{user_question}'")
-    
-    formatted_history = memory.get_formatted_history()
-
-    # --- STAGE 1: MULTI-QUERY FETCHING ---
-    search_query_chain = search_query_prompt | llm | StrOutputParser()
-    search_queries_str = search_query_chain.invoke({
-        "question": user_question,
-        "chat_history": formatted_history
-    })
-    search_queries = [q.strip() for q in search_queries_str.split(',') if q.strip()]
-    print(f"Generated search terms: {search_queries}")
-
-    # Fetch documents for all queries and combine them, avoiding duplicates
-    candidate_docs_raw = []
-    seen_titles = set()
-    for query in search_queries:
-        docs = search_medlineplus(query, retmax=5) # Fetch 5 docs per query
-        for doc in docs:
-            if doc['title'] not in seen_titles:
-                candidate_docs_raw.append(doc)
-                seen_titles.add(doc['title'])
-
-    if not candidate_docs_raw:
-        return "I'm sorry, but I couldn't find any information on that topic in the MedlinePlus database."
-
-    print(f"Fetched {len(candidate_docs_raw)} unique candidate documents from MedlinePlus.")
-    candidate_docs = [
-        Document(page_content=doc['summary'], metadata={'title': doc['title']})
-        for doc in candidate_docs_raw
-    ]
-
-    # --- STAGE 2: DIRECT RERANKING (Faster!) ---
-    # We no longer build a retriever. We rerank the fetched documents directly.
-    reranked_results = compressor.compress_documents(candidate_docs, user_question)
-
-    context = ""
-    for doc in reranked_results:
-        context += f"Topic: {doc.metadata['title']}\nSummary: {doc.page_content}\n\n"
-    print("--- Reranked Context ---")
-    print(context)
-    print("------------------------")
-
-    # --- STAGE 3: ANSWER GENERATION ---
-    answer_generation_chain = final_answer_prompt | llm | StrOutputParser()
-    final_answer = answer_generation_chain.invoke({
-        "question": user_question,
-        "context": context,
-        "chat_history": formatted_history
-    })
-
-    return final_answer
+    logging.info(f"--- New Request --- User Question: '{user_question}'")
+    chat_history = memory.get_langchain_history()
+    try:
+        response = agent_executor.invoke({
+            "input": user_question,
+            "chat_history": chat_history,
+        })
+        return response['output']
+    except Exception:
+        logging.exception("--- ERROR DURING AGENT EXECUTION ---")
+        return "I'm sorry, but I encountered an error while processing your request. Please check the server logs for more details."

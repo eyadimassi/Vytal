@@ -1,18 +1,18 @@
-# requirements.txt
+# backend-python/requirements.txt
 
-rank_bm25  
-langchain-cohere   
-langchain-huggingface  
-
-sentence-transformers  
-torch  
-langchain  
-langchain-community  
-faiss-cpu  
-python-dotenv 
+# --- Core LangChain & Agent Dependencies ---
+langchain
 langchain-google-genai
-requests  
-beautifulsoup4
+langchain-tavily
+langchainhub
+
+# --- Web Server ---
 Flask
 flask-cors
-gunicorn 
+gunicorn
+
+# --- Tools & Utilities ---
+python-dotenv
+requests
+beautifulsoup4
+tavily-python

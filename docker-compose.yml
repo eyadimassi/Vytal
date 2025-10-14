@@ -1,7 +1,5 @@
 # VYTAL/docker-compose.yml
 
-version: '3.8'
-
 services:
   # 1. The React Frontend Service
   frontend:
@@ -9,9 +7,9 @@ services:
     build:
       context: ./frontend
     ports:
-      - "3000:80" # Map host port 3000 to container port 80 (Nginx)
+      - "3000:80"
     depends_on:
-      - backend-node # Don't start until the Node backend is ready
+      - backend-node
 
   # 2. The Node.js Backend Service (API Gateway)
   backend-node:
@@ -19,9 +17,9 @@ services:
     build:
       context: ./backend-node
     ports:
-      - "8080:8080" # Map host port 8080 to container port 8080
+      - "8080:8080"
     depends_on:
-      - backend-python # Don't start until the Python AI service is ready
+      - backend-python
 
   # 3. The Python AI Service
   backend-python:
@@ -29,4 +27,4 @@ services:
     build:
       context: ./backend-python
     env_file:
-      - ./backend-python/.env # Load API keys from the .env file
+      - ./backend-python/.env
