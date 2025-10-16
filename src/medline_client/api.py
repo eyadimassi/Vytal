@@ -3,7 +3,7 @@
 import requests
 import xml.etree.ElementTree as ET
 from typing import List, Dict
-from bs4 import BeautifulSoup # <-- IMPORT BEAUTIFULSOUP
+from bs4 import BeautifulSoup 
 
 MEDLINEPLUS_API_URL = "https://wsearch.nlm.nih.gov/ws/query"
 
@@ -22,7 +22,7 @@ def search_medlineplus(query: str, retmax: int = 3) -> List[Dict[str, str]]:
     }
 
     try:
-        # Increased timeout for more reliability
+
         response = requests.get(MEDLINEPLUS_API_URL, params=params, timeout=20)
         response.raise_for_status()
 
@@ -34,13 +34,11 @@ def search_medlineplus(query: str, retmax: int = 3) -> List[Dict[str, str]]:
             summary_element = doc.find("content[@name='FullSummary']")
             
             if title_element is not None and summary_element is not None:
-                # The title is usually clean, but we'll clean it just in case
+                
                 title_text = BeautifulSoup("".join(title_element.itertext()).strip(), "html.parser").get_text()
                 
-                # --- THIS IS THE KEY CHANGE ---
-                # Get the raw summary text, which includes HTML
                 raw_summary_text = "".join(summary_element.itertext()).strip()
-                # Use BeautifulSoup to parse the HTML and get only the clean text
+       
                 clean_summary_text = BeautifulSoup(raw_summary_text, "html.parser").get_text()
                 
                 if title_text and clean_summary_text:

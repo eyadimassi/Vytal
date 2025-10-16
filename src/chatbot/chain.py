@@ -1,7 +1,7 @@
 # backend-python/src/chatbot/chain.py
 
 import os
-import logging  # <-- IMPORT LOGGING
+import logging  
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -14,17 +14,14 @@ from langchain_tavily import TavilySearch
 from src.medline_client.api import search_medlineplus
 from src.chatbot.memory import ConversationMemory
 
-# --- 1. Load Environment Variables ---
 load_dotenv()
 
-# --- 2. Initialize LLM ---
+
 llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0)
 
-# --- 3. Define the Tools the Agent Can Use ---
 
-# TOOL 1: MedlinePlus search
 def run_medline_search(query: str) -> str:
-    """Performs a search on the MedlinePlus database and returns a formatted string."""
+    
     logging.info(f"--- Executing MedlinePlus Search Tool with query: '{query}' ---")
     docs = search_medlineplus(query, retmax=5)
     if not docs:
@@ -45,7 +42,7 @@ medline_tool = Tool(
     """
 )
 
-# TOOL 2: The web search tool
+
 tavily_search = TavilySearch(max_results=5)
 web_search_tool = Tool(
     name="tavily_search_results_json",
@@ -58,7 +55,7 @@ web_search_tool = Tool(
 
 tools = [medline_tool, web_search_tool]
 
-# --- 4. Create the Agent ---
+
 system_message = """
 You are Vytal, an expert AI health educator. Your persona is professional, empathetic, and clear.
 Your primary mission is to answer the user's question by using the available tools.
@@ -112,9 +109,9 @@ agent_executor = AgentExecutor(
     max_iterations=5
 )
 
-# --- 5. Define the Main Function ---
+
 def get_chatbot_response(user_question: str, memory: ConversationMemory) -> str:
-    """Orchestrates the agent to get a response."""
+    
     logging.info(f"--- New Request --- User Question: '{user_question}'")
     
     chat_history = memory.get_langchain_history()
@@ -126,6 +123,6 @@ def get_chatbot_response(user_question: str, memory: ConversationMemory) -> str:
         })
         return response['output']
     except Exception as e:
-        # This will now print the complete error traceback to the Docker logs
+        
         logging.exception("--- ERROR DURING AGENT EXECUTION ---")
         return "I'm sorry, but I encountered an error while processing your request. Please check my logs or try again."

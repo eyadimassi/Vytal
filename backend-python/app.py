@@ -1,16 +1,15 @@
 # backend-python/app.py
 
 import os
-import logging  # <-- IMPORT LOGGING
+import logging  
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from src.chatbot.chain import get_chatbot_response
 from src.chatbot.memory import ConversationMemory
 
-# --- ADD THIS LOGGING CONFIGURATION ---
-# This ensures all log messages, including tracebacks, are sent to the console.
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# -----------------------------------------
+
 
 app = Flask(__name__)
 CORS(app)
@@ -36,6 +35,6 @@ def chat():
         })
 
     except Exception as e:
-        # Use logging.exception to capture the full error traceback in the logs
+        
         logging.exception("An unhandled error occurred in the /chat endpoint")
         return jsonify({"error": "An internal server error occurred."}), 500

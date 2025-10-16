@@ -7,22 +7,20 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
 from langchain_core.prompts import MessagesPlaceholder
 
-# --- AGENT IMPORTS ---
+# AGENT IMPORTS
 from langchain.agents import AgentExecutor, create_react_agent, Tool
 from langchain import hub
 from langchain_tavily import TavilySearch
 
-# --- Custom Module Imports ---
+# Custom Module Imports 
 from src.medline_client.api import search_medlineplus
 from src.chatbot.memory import ConversationMemory
 
-# --- 1. Load Environment Variables ---
+
 load_dotenv()
 
-# --- 2. Initialize LLM ---
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
 
-# --- 3. Define the Tools the Agent Can Use ---
 
 def run_medline_search(query: str) -> str:
     logging.info(f"--- Executing MedlinePlus Search Tool with query: '{query}' ---")
@@ -49,11 +47,10 @@ web_search_tool = Tool(
 
 tools = [medline_tool, web_search_tool]
 
-# --- 4. Create the Agent ---
+
 prompt = hub.pull("hwchase17/react-chat")
 
-# --- THIS IS THE IMPROVED PROMPT ---
-# We are giving the agent more specific instructions on how to structure its answer.
+
 system_message = """You are Vytal, an expert AI health educator. Your persona is professional, empathetic, and clear.
 
 Your mission is to provide a detailed and well-structured answer to the user's question using the available tools.
@@ -81,7 +78,6 @@ agent_executor = AgentExecutor(
     max_iterations=10,
 )
 
-# --- 5. Define the Main Function ---
 def get_chatbot_response(user_question: str, memory: ConversationMemory) -> str:
     logging.info(f"--- New Request --- User Question: '{user_question}'")
     chat_history = memory.get_langchain_history()

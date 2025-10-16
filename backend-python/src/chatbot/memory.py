@@ -1,7 +1,6 @@
 # src/chatbot/memory.py
 
 from typing import List
-# --- ADD THIS IMPORT ---
 from langchain_core.messages import HumanMessage, AIMessage
 
 class ConversationMemory:
@@ -48,15 +47,15 @@ class ConversationMemory:
         """
         self.history = []
 
-    # --- ADD THIS NEW METHOD ---
+ 
     def get_langchain_history(self) -> list:
         """
         Returns the history as a list of LangChain message objects.
         """
         lc_history = []
-        # Process history in pairs (user, assistant)
+     
         for i in range(0, len(self.history), 2):
-            # Ensure we don't go out of bounds if history is uneven
+            
             if i + 1 < len(self.history):
                 user_msg = self.history[i].replace("User: ", "")
                 bot_msg = self.history[i+1].replace("Assistant: ", "")
