@@ -40,7 +40,7 @@ Follow these instructions to get the project running on your local machine for d
 
 Ensure you have the following software installed on your system:
 
--   [Docker & Docker Compose](https://www.docker.com/products/docker-desktop/) (Docker Desktop usually includes both)
+-   [Docker & Docker Compose](https://www.docker.com/products/docker-desktop/) 
 -   [Git](https://git-scm.com/) for cloning the repository
 
 ### Installation & Setup
@@ -76,28 +76,32 @@ Ensure you have the following software installed on your system:
 
 You can now start a conversation with Vytal!
 
+
 ## 📂 Project Structure
 
-The project is organized into three main services, each in its own directory for clarity.
-Vytal/
-├── backend-node/ # Node.js API Gateway
-│ ├── Dockerfile
-│ └── server.js
-├── backend-python/ # Python AI Service
-│ ├── .env # (You create this for your API keys)
-│ ├── Dockerfile
-│ ├── requirements.txt
-│ └── src/
-│ ├── chatbot/ # Core agent and tool logic
-│ └── medline_client/ # Client for MedlinePlus API
-├── frontend/ # React Frontend
-│ ├── Dockerfile
-│ └── src/ # React components and styles
-├── .gitignore
-├── docker-compose.yml # Defines the multi-container setup
-└── README.md # You are here!
-code
-Code
+The project is organized as a monorepo with a clear separation of concerns for each service. Each primary directory in the root represents a self-contained, containerized service.
+
+```Vytal/
+├── .gitignore          # Specifies intentionally untracked files to ignore.
+├── docker-compose.yml  # The master file that defines and orchestrates all services.
+├── README.md           # You are here!
+│
+├── frontend/             # React Frontend Service (Client-side UI)
+│   ├── Dockerfile        # Defines the build steps for the React app container (Nginx server).
+│   └── src/              # Contains all React components, hooks, styles, and logic.
+│
+├── backend-node/         # Node.js API Gateway Service
+│   ├── Dockerfile        # Defines the build steps for the Node.js container.
+│   └── server.js         # The entry point for the Express API server, which routes requests.
+│
+└── backend-python/       # Python AI Service (Flask & LangChain)
+    ├── .env              # (You create this) Stores secret API keys for Google and Tavily.
+    ├── Dockerfile        # Defines the build steps for the Python/Flask container.
+    ├── requirements.txt  # Lists the Python dependencies for the AI service.
+    └── src/              # Contains the core application logic for the AI agent.
+        ├── chatbot/      # Logic for the LangChain agent, tools, and chains.
+        └── medline_client/ # A simple client to interact with the MedlinePlus API.
+
 ## 🔮 Future Improvements
 
 Here are some planned features to enhance Vytal:
