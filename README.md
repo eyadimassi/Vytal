@@ -82,25 +82,25 @@ You can now start a conversation with Vytal!
 The project is organized as a monorepo with a clear separation of concerns for each service. Each primary directory in the root represents a self-contained, containerized service.
 
 ```Vytal/
-├── .gitignore          # Specifies intentionally untracked files to ignore.
-├── docker-compose.yml  # The master file that defines and orchestrates all services.
-├── README.md           # You are here!
+├── .gitignore          
+├── docker-compose.yml  
+├── README.md           
 │
-├── frontend/             # React Frontend Service (Client-side UI)
-│   ├── Dockerfile        # Defines the build steps for the React app container (Nginx server).
-│   └── src/              # Contains all React components, hooks, styles, and logic.
+├── frontend/             
+│   ├── Dockerfile        
+│   └── src/              
 │
-├── backend-node/         # Node.js API Gateway Service
-│   ├── Dockerfile        # Defines the build steps for the Node.js container.
-│   └── server.js         # The entry point for the Express API server, which routes requests.
+├── backend-node/         
+│   ├── Dockerfile        
+│   └── server.js         
 │
-└── backend-python/       # Python AI Service (Flask & LangChain)
-    ├── .env              # (You create this) Stores secret API keys for Google and Tavily.
-    ├── Dockerfile        # Defines the build steps for the Python/Flask container.
-    ├── requirements.txt  # Lists the Python dependencies for the AI service.
-    └── src/              # Contains the core application logic for the AI agent.
-        ├── chatbot/      # Logic for the LangChain agent, tools, and chains.
-        └── medline_client/ # A simple client to interact with the MedlinePlus API.
+└── backend-python/       
+    ├── .env              
+    ├── Dockerfile        
+    ├── requirements.txt  
+    └── src/              
+        ├── chatbot/      
+        └── medline_client/ 
 
 ## 🔮 Future Improvements
 
