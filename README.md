@@ -101,6 +101,9 @@ The project is organized as a monorepo with a clear separation of concerns for e
     └── src/              
         ├── chatbot/      
         └── medline_client/ 
+```
+
+
 
 ## 🔮 Future Improvements
 
